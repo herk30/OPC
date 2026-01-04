@@ -8,6 +8,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Ultrasonic.h>
 #include <ESP32Servo.h>
+#include <Adafruit_Sensor.h>
 #include <BluetoothSerial.h>
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
