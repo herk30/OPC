@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <iostream>
 #include <Adafruit_GFX.h>    
 #include <Adafruit_ST7735.h> 
 #include <SPI.h>
@@ -8,7 +9,6 @@
 #include <Ultrasonic.h>
 #include <ESP32Servo.h>
 #include <BluetoothSerial.h>
-#include <iostream>
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
