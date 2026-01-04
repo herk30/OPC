@@ -16,6 +16,7 @@
 #if !defined(CONFIG_BT_SPP_ENABLED)
 #error Serial Port Profile for Bluetooth is not available or not enabled. It is only available for the ESP32 chip.
 #endif
+#define BT_DISCOVER_TIME 10000
 
 #define TFT_CS    2
 #define TFT_RESET 4
@@ -74,7 +75,7 @@ void setup()
 {
   Serial.begin(115200); 
 
-   SerialBT.begin("ESP32_Lele");  
+  SerialBT.begin("ESP32_Lele");  
   Serial.println("The device started, now you can pair it with bluetooth!");
 
   if (btScanAsync) {
