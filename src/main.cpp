@@ -7,18 +7,20 @@
 #include <SPI.h>
 #include "qrcode.h"
 
-const char* ssid = "Tria VP Tang 1";      
-const char* password = "Triacafe";     
+const char* ssid = "Ti Li";       
+const char* password = "tianhtiem2730";     
 
 const char* status_url = "https://render-deploy-django-2nl1.onrender.com/api/locker/1/status/"; 
 const char* confirm_url = "https://render-deploy-django-2nl1.onrender.com/api/locker/1/confirm/"; 
-const char* webUrl = "https://vercel-deploy-front-end-delta.vercel.app"; 
 
-#define TFT_CS    2
-#define TFT_RESET 4
-#define TFT_AO    16  
-#define TFT_SDA   17  
-#define TFT_SCK   5
+const char* url_pickup = "https://vercel-deploy-front-end-delta.vercel.app"; 
+const char* url_store  = "https://vercel-deploy-front-end-delta.vercel.app/post?locker=1"; 
+
+#define TFT_CS    17
+#define TFT_RESET 16
+#define TFT_AO    4  
+#define TFT_SDA   2  
+#define TFT_SCK   15
 
 #define DOOR_SENSOR_PIN 27
 #define Relay_pin 22
@@ -31,15 +33,18 @@ unsigned long timerDelay = 1000;
 bool lastIsOccupied = false; 
 bool isFirstRun = true;
 
-void drawQrWithStatus(String url, bool isOccupied) {
+void drawQrWithStatus(bool isOccupied) {
   tft.fillScreen(ST7735_BLACK);
   
+  const char* targetUrl = isOccupied ? url_pickup : url_store;
+
   uint8_t qrcodeData[qrcode_getBufferSize(6)]; 
-  qrcode_initText(&qrcode, qrcodeData, 6, 0, url.c_str()); 
+  qrcode_initText(&qrcode, qrcodeData, 6, 0, targetUrl); 
   
-  int scale = 3; 
-  int startX = (128 - (qrcode.size * scale)) / 2;
-  int startY = 5; 
+  int scale = 2; 
+  
+  int startY = 22; 
+  int startX = (tft.width() - (qrcode.size * scale)) / 2;
 
   tft.fillRect(startX - 2, startY - 2, (qrcode.size * scale) + 4, (qrcode.size * scale) + 4, ST7735_WHITE);
 
@@ -47,25 +52,39 @@ void drawQrWithStatus(String url, bool isOccupied) {
     for (uint8_t x = 0; x < qrcode.size; x++) {
       if (qrcode_getModule(&qrcode, x, y)) {
         tft.fillRect(startX + (x * scale), startY + (y * scale), scale, scale, ST7735_BLACK);
-      } else {
-        tft.fillRect(startX + (x * scale), startY + (y * scale), scale, scale, ST7735_WHITE);
       }
     }
   }
 
-  tft.setCursor(0, 135); 
-  tft.setTextSize(1);
+  tft.setCursor(0, 5); 
+  tft.setTextSize(1);  
   
   if (isOccupied) {
+    tft.setTextSize(2);
+    tft.setCursor(15, 2); 
     tft.setTextColor(ST7735_RED); 
-    tft.println("   [ CO DO ]");
-    tft.setTextColor(ST7735_WHITE);
-    tft.println(" Quet de LAY do");
+    tft.println("OCCUPIED"); 
   } else {
+    tft.setTextSize(2);
+    tft.setCursor(10, 2); 
     tft.setTextColor(ST7735_GREEN); 
-    tft.println("   [ TU TRONG ]");
-    tft.setTextColor(ST7735_WHITE);
-    tft.println(" Quet de GUI do");
+    tft.println("AVAILABLE");
+  }
+
+  int textBottomY = startY + (qrcode.size * scale) + 8;
+  
+  tft.setCursor(2, textBottomY); 
+  tft.setTextSize(1); 
+  tft.setTextColor(ST7735_WHITE);
+  
+  if (isOccupied) {
+    tft.println("Locker is full.");
+    tft.setCursor(2, textBottomY + 10); 
+    tft.println("Scan to PICK UP");
+  } else {
+    tft.println("Locker is empty.");
+    tft.setCursor(2, textBottomY + 10); 
+    tft.println("Scan to STORE");
   }
 }
 
@@ -85,16 +104,28 @@ void openDoor(bool currentStatus)
 {
   Serial.println(">>> HANH DONG: MO CUA");
   tft.fillScreen(ST7735_GREEN);
-  tft.setCursor(15, 60);
   tft.setTextColor(ST7735_BLACK);
-  tft.setTextSize(2);
-  tft.println("MO KHOA!");
+
+  if (currentStatus) {
+    tft.setTextSize(2);
+    tft.setCursor(22, 50); 
+    tft.println("DEPOSIT"); 
+    
+    tft.setTextSize(1);
+    tft.setCursor(34, 75); 
+    tft.println("SUCCESSFUL");
+  } else {
+    tft.setTextSize(2);
+    tft.setCursor(15, 60);
+    tft.println("UNLOCKED");
+  }
+
   digitalWrite(Relay_pin, HIGH); 
   delay(1000); 
   digitalWrite(Relay_pin, LOW);
   confirmUnlockDone();
   delay(2000); 
-  drawQrWithStatus(webUrl, currentStatus);
+  drawQrWithStatus(currentStatus);
 }
 
 void setup() 
@@ -118,7 +149,8 @@ void setup()
   pinMode(Relay_pin, OUTPUT);
   digitalWrite(Relay_pin, LOW); 
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP);
-  drawQrWithStatus(webUrl, false);
+  
+  drawQrWithStatus(false);
 }
 
 void loop() 
@@ -146,7 +178,7 @@ void loop()
         }
         else if (isOccupied != lastIsOccupied || isFirstRun) {
              Serial.println("Update QR Status");
-             drawQrWithStatus(webUrl, isOccupied);
+             drawQrWithStatus(isOccupied);
              lastIsOccupied = isOccupied;
              isFirstRun = false;
         }
