@@ -5,10 +5,10 @@
 #include <Adafruit_GFX.h>    
 #include <Adafruit_ST7735.h> 
 #include <SPI.h>
-#include "qrcode.h"
+#include <WiFiMulti.h> 
+#include <qrcode.h>
 
-const char* ssid = "Ti Li";       
-const char* password = "tianhtiem2730";     
+WiFiMulti wifiMulti;
 
 const char* status_url = "https://render-deploy-django-2nl1.onrender.com/api/locker/1/status/"; 
 const char* confirm_url = "https://render-deploy-django-2nl1.onrender.com/api/locker/1/confirm/"; 
@@ -23,7 +23,7 @@ const char* url_store  = "https://vercel-deploy-front-end-delta.vercel.app/post?
 #define TFT_SCK   15
 
 #define DOOR_SENSOR_PIN 27
-#define Relay_pin 22
+#define Relay_pin 32
 
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_AO, TFT_SDA, TFT_SCK, TFT_RESET);
 QRCode qrcode;
@@ -89,7 +89,7 @@ void drawQrWithStatus(bool isOccupied) {
 }
 
 void confirmUnlockDone() {
-  if (WiFi.status() == WL_CONNECTED) {
+  if (wifiMulti.run() == WL_CONNECTED) {
     WiFiClientSecure client;
     client.setInsecure(); 
     HTTPClient http;
@@ -132,6 +132,11 @@ void setup()
 {
   Serial.begin(115200); 
   
+  wifiMulti.addAP("Ti Li","tianhtiem2730");
+  wifiMulti.addAP("ACLAB","ACLAB2023");
+  wifiMulti.addAP("HCMUT01","khoi.lenguyen3010");
+  wifiMulti.addAP("TriaCafe","Triacafe");
+
   tft.initR(INITR_BLACKTAB);
   tft.fillScreen(ST77XX_BLACK);
   tft.setRotation(1);  
@@ -140,12 +145,16 @@ void setup()
   tft.setTextColor(ST7735_WHITE);
   tft.println("Connecting Wifi...");
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  Serial.println("Scanning and Connecting...");
+  while (wifiMulti.run() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+  
   Serial.println("\nWiFi Connected.");
+  Serial.print("SSID: "); Serial.println(WiFi.SSID()); 
+  Serial.print("IP: "); Serial.println(WiFi.localIP());
+
   pinMode(Relay_pin, OUTPUT);
   digitalWrite(Relay_pin, LOW); 
   pinMode(DOOR_SENSOR_PIN, INPUT_PULLUP);
@@ -157,7 +166,7 @@ void loop()
 {
   if ((millis() - lastTime) > timerDelay)
   {
-    if (WiFi.status() == WL_CONNECTED){
+    if (wifiMulti.run() == WL_CONNECTED){
       
       WiFiClientSecure client;
       client.setInsecure(); 
