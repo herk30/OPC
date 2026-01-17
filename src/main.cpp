@@ -7,6 +7,7 @@
 #include <SPI.h>
 #include <WiFiMulti.h> 
 #include <qrcode.h>
+#include <ArduinoOTA.h>
 
 WiFiMulti wifiMulti;
 
